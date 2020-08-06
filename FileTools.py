@@ -15,6 +15,7 @@ class FileTools:
         base_dir= options['base']
         target= options['target']
         force_copy= options['force']
+        verbose= options['verbose']
         print( 'copy %s to %s' % (base_dir,target) )
         start= time.perf_counter()
         total_count= len(file_list)
@@ -39,7 +40,8 @@ class FileTools:
                     if src_time <= dest_time:
                         skip= True
             if not skip:
-                #print( file_name + ' ----> ' + dest_file )
+                if verbose:
+                    print( file_name + ' --> ' + dest_file )
                 shutil.copy( file_name, dest_file )
                 os.chmod( dest_file, stat.S_IWRITE )
                 file_count+= 1
@@ -73,12 +75,13 @@ class FileTools:
 def usage():
     print( 'FileTools.py v1.10 2018/01/14 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [options] <base_dir>' )
-    print( '  --ignore <ignore_file>   (default .flignore)' )
+    print( '  -i,--ignore <ignore_file>  (default .flignore)' )
     print( '  --copy <target_folder>' )
     print( '  -l,--list' )
     print( '  --size' )
-    print( '  --force                  force overwrite' )
-    print( '  --log                    output to output.log' )
+    print( '  --force                    force overwrite' )
+    print( '  --log                      output to output.log' )
+    print( '  --verbose' )
     print( 'ex. FileTools.py src --copy dest' )
     sys.exit( 1 )
 
@@ -88,6 +91,7 @@ def main( argv ):
         'base' : '.',
         'force' : False,
         'target': None,
+        'verbose': False,
     }
     action= None
     ignore_file= '.flignore'
@@ -100,12 +104,14 @@ def main( argv ):
         if arg[0] == '-':
             if arg == '--debug':
                 FileListLib.Log.DebugOutput= True
-            elif arg == '--ignore':
+            elif arg == '-i' or arg == '--ignore':
                 if ai+1 < acount:
                     ai+= 1
                     ignore_file= argv[ai]
             elif arg == '--force':
                 options['force']= True
+            elif arg == '--verbose':
+                options['verbose']= True
             elif arg == '--copy':
                 if ai+1 < acount:
                     ai+= 1
