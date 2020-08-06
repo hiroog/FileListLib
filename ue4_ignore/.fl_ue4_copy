@@ -1,0 +1,71 @@
+# UE4 Engine Copy
+### VCS
+/\.hg/
+/\.hglf/
+/\.git/
+/\.svn/
+### Vim
+\.swp$
+\.swo$
+### Python
+/__pycache__/
+### UE4
+^/[^/]+\.sln$
+\.ddc$
+\.udd$
+/Saved/
+/Intermediate/
+\.exe\.config$
+\.dll\.config$
+/obj/
+/SwarmCache/
+\.target$
+-Debug\.exe$
+-Debug\.dll$
+-Debug\.a$
+-Debug\.lib$
+-Debug\.modules$
+/WindowsNoEditor/
+\.pkg$
+/UserEngine\.ini$
+### Project only
+^/DerivedDataCache/
+### UE4 Engine only
+^/Engine/#/Binaries/Android/
+^/Engine/#/Binaries/Win32/
+^/Engine/Programs/UnrealBuildTool/
+^/Engine/Build/Receipts/[^/]+\.xml$
+^/Engine/DerivedDataCache/
+^/Engine/Documentation/
+^/Engine/ThirdParty/svn/
+^/Engine/Plugins/Developer/BlankPlugin/
+^/Engine/Plugins/Developer/SubversionSourceControl/
+^/Engine/doc/
+^/Engine/docs/
+^/EngineTest/
+^/QAGame/
+^/Samples/
+### tool
+### patch
+\.rej$
+\.org$
+\.orig$
+### VS
+\.pdb$
+\.mdb$
+/\.vs/
+\.VC\.db$
+\.opendb$
+\.opensdf$
+\.exp$
+\.log$
+\.sdf$
+\.suo$
+\.db$
+### maya
+/.mayaSwatches/
+workspace\.mel$
+###
+\.swatch$
+### debug
+\.dump$
