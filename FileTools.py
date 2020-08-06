@@ -81,7 +81,7 @@ def usage():
     print( '  --size' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
-    print( '  --verbose' )
+    print( '  -v,--verbose' )
     print( 'ex. FileTools.py src --copy dest' )
     sys.exit( 1 )
 
@@ -110,7 +110,7 @@ def main( argv ):
                     ignore_file= argv[ai]
             elif arg == '--force':
                 options['force']= True
-            elif arg == '--verbose':
+            elif arg == '-v' or arg == '--verbose':
                 options['verbose']= True
             elif arg == '--copy':
                 if ai+1 < acount:
