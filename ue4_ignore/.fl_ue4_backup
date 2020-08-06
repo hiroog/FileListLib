@@ -47,6 +47,10 @@
 ^/QAGame/
 ^/Samples/
 ### tool
+/output\.log$
+/\.fl_ue4_copy$
+/\.fl_ue4_backup$
+^/FLB_Makefile\.py$
 ### patch
 \.rej$
 \.org$
