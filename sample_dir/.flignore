@@ -1,0 +1,30 @@
+#  #                    comment
+#  \.bin$               末尾の拡張子のみ
+#  [^/]+\.bin$          末尾の拡張子のみ、'.' で始まるケースを除く
+#  ^/Intermediate/      .flignore がある場所の Intermediate folder のみ
+#  /Build/BatchFiles/   .flignore がある場所から辿って Build/BatchFiles folder のみ
+#  /ThirdParty/         .flignore がある場所以下の任意の ThirdParty folder にマッチ
+#  ^/[^/]+\.sln$        .flignore がある場所直下の *.sln のみ
+#  /workspace.mel$      任意の場所の "workspace.mel" のみ
+#  -bkup.log$           任意の場所の "*-bkup.log" のみ
+#  !/inc.bin$           除外対象から外す
+#
+/\.flignore$
+#
+# ".bin" directory のみ除外 (file "*.bin" は含む)
+/\.bin/
+#
+# extension "*.tmp" file のみ除外 (directory ".tmp" は含む)
+\.tmp$
+#
+# file "c.file" のみ除外 (file "aaaac.file" は含む)
+/c\.file$
+#
+# file "*d.file" をすべて除外
+d\.file$
+#
+# "*e.file*" をすべて除外。ファイルもディレクトリも区別なし。
+e\.file
+#
+# 直下の "f.data" ファイルのみ除外 (sample_dir/f.data は含む)
+^/f\.data$

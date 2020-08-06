@@ -1,0 +1,12 @@
+$ python3 ../FileTools.py -l
+
+----------------------------------------
+./g.data
+./test/.tmp/in_dot_tmp_folder
+./test/a.bin/in_a_dot_bin_folder
+./test/aaaac.file
+./test/b.bin
+./test/f.data
+./test.txt
+----------------------------------------
+

@@ -1,0 +1,15 @@
+#  #                    comment
+#  \.bin$               末尾の拡張子のみ
+#  [^/]+\.bin$          末尾の拡張子のみ、'.' で始まるケースを除く
+#  ^/Intermediate/      .flignore がある場所の Intermediate folder のみ
+#  /Build/BatchFiles/   .flignore がある場所から辿って Build/BatchFiles folder のみ
+#  /ThirdParty/         .flignore がある場所以下の任意の ThirdParty folder にマッチ
+#  ^/[^/]+\.sln$        .flignore がある場所直下の *.sln のみ
+#  /workspace.mel$      任意の場所の "workspace.mel" のみ
+#  -bkup.log$           任意の場所の "*-bkup.log" のみ
+#  !/inc.bin$           除外対象から外す
+#
+/\.git/
+/__pycache__/
+/\.gitignore$
+#

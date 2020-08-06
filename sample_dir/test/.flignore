@@ -1,0 +1,3 @@
+# in sub-folder
+# 直下の "g.data" ファイルのみ除外。親 dir の g.data には影響を与えない。
+^/g\.data$
