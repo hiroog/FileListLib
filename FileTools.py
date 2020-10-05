@@ -35,6 +35,85 @@ Log= LogOutput()
 
 #------------------------------------------------------------------------------
 
+class UTF8Tools:
+    ASCII= 0
+    UTF8= 1
+    ERROR= 2
+    def __init__( self ):
+        pass
+
+    def validate_utf8_len( self, text, pi, size ):
+        pi+= 1
+        size-= 1
+        end_pi= pi + size
+        while pi < end_pi:
+            ch= text[pi]
+            #print( hex(ch) )
+            if ch < 0x80 or ch > 0xbf:
+                return  -1
+            pi+= 1
+        return  pi
+
+    def validate_utf8( self, text, file_name ):
+        line_size= len(text)
+        has_utf8= UTF8Tools.ASCII
+        pi= 0
+        while pi < line_size:
+            ch= text[pi]
+            if ch >= 0x80:
+                if ch >= 0xc0 and ch <= 0xdf:
+                    pi= self.validate_utf8_len( text, pi, 2 )
+                    has_utf8= UTF8Tools.UTF8
+                elif ch >= 0xe0 and ch <= 0xef:
+                    pi= self.validate_utf8_len( text, pi, 3 )
+                    has_utf8= UTF8Tools.UTF8
+                elif ch >= 0xf0 and ch <= 0xf7:
+                    pi= self.validate_utf8_len( text, pi, 4 )
+                    has_utf8= UTF8Tools.UTF8
+                elif ch >= 0xf8 and ch <= 0xfb:
+                    pi= self.validate_utf8_len( text, pi, 5 )
+                    has_utf8= UTF8Tools.UTF8
+                elif ch >= 0xfc and ch <= 0xfd:
+                    pi= self.validate_utf8_len( text, pi, 6 )
+                    has_utf8= UTF8Tools.UTF8
+                else:
+                    Log.v( 'unknown first byte ' + hex(ch) + ' ' + file_name )
+                    return  UTF8Tools.ERROR
+            else:
+                pi+= 1
+            if pi < 0:
+                Log.v( 'utf8 invalid length ' + file_name )
+                return  UTF8Tools.ERROR
+        return  has_utf8
+
+    def isUTF8_0( self, file_name ):
+        utf8= UTF8Tools.ASCII
+        has_bom= False
+        first_line= True
+        with open( file_name, 'rb' ) as fi:
+            for line in fi:
+                if first_line:
+                    if line[:3] == codecs.BOM_UTF8:
+                        has_bom= True
+                    first_line= False
+                result= self.validate_utf8( line, file_name )
+                if result != UTF8Tools.ASCII:
+                    utf8= result
+                    break
+        return  utf8, has_bom
+
+    def isUTF8_1( self, file_name ):
+        try:
+            with open( file_name, 'rb' ) as fi:
+                data= fi.read()
+                data.decode( 'utf-8', 'strict' )
+        except UnicodeDecodeError:
+            return  UTF8Tools.ERROR
+        return  UTF8Tools.UTF8
+
+
+#------------------------------------------------------------------------------
+
 class FileTools:
     def __init__( self ):
         pass
@@ -106,6 +185,15 @@ class FileTools:
                             break
         return  grep_list
 
+    def f_noutf8( self, file_list, options ):
+        verbose= options['verbose']
+        u8tools= UTF8Tools()
+        grep_list= []
+        for file_name in file_list:
+            if u8tools.isUTF8_1( file_name ) == UTF8Tools.ERROR:
+                grep_list.append( file_name )
+        return  grep_list
+
     def f_size_command( self, file_list, options ):
         total= 0
         for file_name in file_list:
@@ -135,9 +223,10 @@ def usage():
     print( 'usage: FileTools.py [options] <base_dir>' )
     print( '  -i,--ignore <ignore_file>  (default .flignore)' )
     print( '  --copy <target_folder>' )
-    print( '  --grep <pattern>' )
     print( '  -l,--list' )
     print( '  --size' )
+    print( '  --grep <pattern>' )
+    print( '  --noutf8' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
     print( '  --clog <file_name>         output console log' )
@@ -186,6 +275,8 @@ def main( argv ):
                 action_list.append( 'f_size_command' )
             elif arg == '-l' or arg == '--list':
                 action_list.append( 'f_file_list' )
+            elif arg == '--noutf8':
+                action_list.append( 'f_noutf8' )
             elif arg == '--log':
                 logging= True
             elif arg == '--clog':
@@ -222,7 +313,7 @@ def main( argv ):
             except AttributeError:
                 usage()
                 break
-            Log.p( '#pass: %d files' % len(file_list) )
+            Log.p( '#pass: %d files (%s)' % (len(file_list), action) )
     else:
         usage()
 
