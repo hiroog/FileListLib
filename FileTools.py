@@ -3,9 +3,11 @@
 
 import  os, stat
 import  sys
+import  re
 import  time
 import  shutil
 import  FileListLib
+
 
 class FileTools:
     def __init__( self ):
@@ -51,6 +53,29 @@ class FileTools:
                 print( " %d%%  %.2f sec" % (progress * 100,sec) )
                 progress+= progress_step
         print( 'copy %d files' % file_count )
+        return  file_list
+
+    def f_grep( self, file_list, options ):
+        pattern= options['pattern']
+        verbose= options['verbose']
+        grep_pat= re.compile( pattern.encode( encoding='utf-8' ) )
+        grep_list= []
+        for file_name in file_list:
+            with open( file_name, 'rb' ) as fi:
+                line_num= 0
+                for line in fi:
+                    line_num+= 1
+                    pat= grep_pat.search( line )
+                    if pat is not None:
+                        grep_list.append( file_name )
+                        if verbose:
+                            print( '[%s] %d' % (file_name, line_num) )
+                            sys.stdout.buffer.write( line )
+                            sys.stdout.buffer.write( b'\r\n' )
+                        else:
+                            print( file_name )
+                            break
+        return  grep_list
 
     def f_size_command( self, file_list, options ):
         total= 0
@@ -66,17 +91,22 @@ class FileTools:
                 break
             index+= 1
             unit>>= 10
+        return  file_list
 
     def f_file_list( self, file_list, options ):
         total= 0
         for file_name in file_list:
             print( file_name )
+        return  file_list
+
+#------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.10 2018/01/14 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.20 2020/10/04 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [options] <base_dir>' )
     print( '  -i,--ignore <ignore_file>  (default .flignore)' )
     print( '  --copy <target_folder>' )
+    print( '  --grep <pattern>' )
     print( '  -l,--list' )
     print( '  --size' )
     print( '  --force                    force overwrite' )
@@ -93,7 +123,7 @@ def main( argv ):
         'target': None,
         'verbose': False,
     }
-    action= None
+    action_list= []
     ignore_file= '.flignore'
     logging= False
 
@@ -116,13 +146,16 @@ def main( argv ):
                 if ai+1 < acount:
                     ai+= 1
                     options['target']= argv[ai]
-                    action= 'f_copy_target'
-                else:
-                    action= None
+                    action_list.append( 'f_copy_target' )
+            elif arg == '--grep':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['pattern']= argv[ai]
+                    action_list.append( 'f_grep' )
             elif arg == '--size':
-                action= 'f_size_command'
+                action_list.append( 'f_size_command' )
             elif arg == '-l' or arg == '--list':
-                action= 'f_file_list'
+                action_list.append( 'f_file_list' )
             elif arg == '--log':
                 logging= True
             else:
@@ -131,13 +164,15 @@ def main( argv ):
             options['base']= arg
         ai+= 1
 
-    if action:
+    verbose= options['verbose']
+    if action_list != []:
         start= time.perf_counter()
 
         fll= FileListLib.FileListLib( ignore_file )
         file_list= fll.find_file( options['base'] )
 
-        print( '#pass: %d files (%.2f sec)' % (len(file_list), time.perf_counter() - start) )
+        if verbose:
+            print( '#pass: %d files (%.2f sec)' % (len(file_list), time.perf_counter() - start) )
 
         if logging:
             with open( 'output.log', 'w', encoding='utf-8' ) as fo:
@@ -147,15 +182,19 @@ def main( argv ):
                 fo.write( 'file=%d\n' % len(file_list) )
 
         ftool= FileTools()
-        try:
-            func= getattr( ftool, action )
-            func( file_list, options )
-        except AttributeError:
-            usage()
+        for action in action_list:
+            print( '#pass: %d files' % len(file_list) )
+            try:
+                func= getattr( ftool, action )
+                file_list= func( file_list, options )
+            except AttributeError:
+                usage()
+                break
     else:
         usage()
 
-    print( '#total: %.2f sec' % (time.perf_counter() - start) )
+    if verbose:
+        print( '#total: %.2f sec' % (time.perf_counter() - start) )
     return  0
 
 

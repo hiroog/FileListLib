@@ -1,6 +1,6 @@
 # File listing library
 
-git のように ignorefile の指定が可能なファイルリストツールです。python 3.x が必要です。
+git のように ignorefile の指定が可能なファイルリストツールです。Python 3.x が必要です。
 
 
 ## 目的
