@@ -55,13 +55,10 @@ def func_grep( task ):
     cmd= [ '', '-i',  ignorefile, '--grep', task.pattern ]
     FileTools.main( cmd )
 
-task= tool.addScriptTask( genv, 'grep_backup', func_list )
-task.ignorefile= 'backup'
+task= tool.addScriptTask( genv, 'grep', func_grep )
+task.ignorefile= 'grep'
 task.pattern= GREP_PATTERN
 
-task= tool.addScriptTask( genv, 'grep_release', func_list )
-task.ignorefile= 'copy'
-task.pattern= GREP_PATTERN
 
 #------------------------------------------------------------------------------
 

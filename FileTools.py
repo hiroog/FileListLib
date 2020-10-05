@@ -8,6 +8,32 @@ import  time
 import  shutil
 import  FileListLib
 
+class LogOutput:
+    def __init__( self ):
+        self.Verbose= False
+        self.LogFile= None
+    def open_log( self, file_name ):
+        self.LogFile= open( file_name, 'w' )
+    def p( self, *args ):
+        print( *args )
+        if self.LogFile:
+            for arg in args:
+                self.LogFile.write( arg )
+                self.LogFile.write( ' ' )
+            self.LogFile.write( '\n' )
+    def v( self, *args ):
+        if self.Verbose:
+            self.p( *args )
+    def wb( self, arg ):
+        sys.stdout.flush()
+        sys.stdout.buffer.write( arg )
+        if self.LogFile:
+            self.LogFile.flush()
+            self.LogFile.buffer.write( arg )
+
+Log= LogOutput()
+
+#------------------------------------------------------------------------------
 
 class FileTools:
     def __init__( self ):
@@ -18,7 +44,7 @@ class FileTools:
         target= options['target']
         force_copy= options['force']
         verbose= options['verbose']
-        print( 'copy %s to %s' % (base_dir,target) )
+        Log.p( 'copy %s to %s' % (base_dir,target) )
         start= time.perf_counter()
         total_count= len(file_list)
         copy_index= 0
@@ -43,16 +69,16 @@ class FileTools:
                         skip= True
             if not skip:
                 if verbose:
-                    print( file_name + ' --> ' + dest_file )
+                    Log.v( file_name + ' --> ' + dest_file )
                 shutil.copy( file_name, dest_file )
                 os.chmod( dest_file, stat.S_IWRITE )
                 file_count+= 1
             copy_index+= 1
             if copy_index / total_count > progress:
                 sec= time.perf_counter() - start
-                print( " %d%%  %.2f sec" % (progress * 100,sec) )
+                Log.p( " %d%%  %.2f sec" % (progress * 100,sec) )
                 progress+= progress_step
-        print( 'copy %d files' % file_count )
+        Log.p( 'copy %d files' % file_count )
         return  file_list
 
     def f_grep( self, file_list, options ):
@@ -63,17 +89,20 @@ class FileTools:
         for file_name in file_list:
             with open( file_name, 'rb' ) as fi:
                 line_num= 0
+                added_flag= False
                 for line in fi:
                     line_num+= 1
                     pat= grep_pat.search( line )
                     if pat is not None:
-                        grep_list.append( file_name )
+                        if not added_flag:
+                            grep_list.append( file_name )
+                            added_flag= True
                         if verbose:
-                            print( '[%s] %d' % (file_name, line_num) )
-                            sys.stdout.buffer.write( line )
-                            sys.stdout.buffer.write( b'\r\n' )
+                            Log.v( '[%s] %d' % (file_name, line_num) )
+                            Log.wb( line )
+                            Log.wb( b'\r\n' )
                         else:
-                            print( file_name )
+                            Log.p( file_name )
                             break
         return  grep_list
 
@@ -81,13 +110,13 @@ class FileTools:
         total= 0
         for file_name in file_list:
             total+= os.path.getsize( file_name )
-        #print( 'size= %d byte' % total )
+        #Log.p( 'size= %d byte' % total )
         mark= "GMK"
         unit= 1024*1024*1024
         index= 0
         while unit >= 1024:
             if total >= unit:
-                print( 'size= %.2f %c  (%d byte)' % (total/unit,mark[index],total) )
+                Log.p( 'size= %.2f %c  (%d byte)' % (total/unit,mark[index],total) )
                 break
             index+= 1
             unit>>= 10
@@ -96,7 +125,7 @@ class FileTools:
     def f_file_list( self, file_list, options ):
         total= 0
         for file_name in file_list:
-            print( file_name )
+            Log.p( file_name )
         return  file_list
 
 #------------------------------------------------------------------------------
@@ -111,6 +140,7 @@ def usage():
     print( '  --size' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
+    print( '  --clog <file_name>         output console log' )
     print( '  -v,--verbose' )
     print( 'ex. FileTools.py src --copy dest' )
     sys.exit( 1 )
@@ -158,21 +188,24 @@ def main( argv ):
                 action_list.append( 'f_file_list' )
             elif arg == '--log':
                 logging= True
+            elif arg == '--clog':
+                if ai+1 < acount:
+                    ai+= 1
+                    Log.open_log( argv[ai] )
             else:
                 usage()
         else:
             options['base']= arg
         ai+= 1
 
-    verbose= options['verbose']
+    Log.Verbose= options['verbose']
     if action_list != []:
         start= time.perf_counter()
 
         fll= FileListLib.FileListLib( ignore_file )
         file_list= fll.find_file( options['base'] )
 
-        if verbose:
-            print( '#pass: %d files (%.2f sec)' % (len(file_list), time.perf_counter() - start) )
+        Log.v( '#pass: %d files (%.2f sec)' % (len(file_list), time.perf_counter() - start) )
 
         if logging:
             with open( 'output.log', 'w', encoding='utf-8' ) as fo:
@@ -183,18 +216,17 @@ def main( argv ):
 
         ftool= FileTools()
         for action in action_list:
-            print( '#pass: %d files' % len(file_list) )
             try:
                 func= getattr( ftool, action )
                 file_list= func( file_list, options )
             except AttributeError:
                 usage()
                 break
+            Log.p( '#pass: %d files' % len(file_list) )
     else:
         usage()
 
-    if verbose:
-        print( '#total: %.2f sec' % (time.perf_counter() - start) )
+    Log.v( '#total: %.2f sec' % (time.perf_counter() - start) )
     return  0
 
 
