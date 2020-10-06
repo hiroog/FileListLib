@@ -193,6 +193,15 @@ class FileTools:
         Log.p( 'output=', save_file )
         return  file_list
 
+    def f_difftree( self, file_list, options ):
+        diffroot= options['diffroot']
+        diff_list= []
+        for file_name in file_list:
+            target_path= os.path.join( diffroot, file_name )
+            if not os.path.exists( target_path ):
+                diff_list.append( file_name )
+        return  diff_list
+
 #------------------------------------------------------------------------------
 
 def usage():
@@ -206,6 +215,7 @@ def usage():
     print( '  --noutf8' )
     print( '  --cvutf8' )
     print( '  --save <file_name>' )
+    print( '  --difftree <diff_root>' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
     print( '  --clog <file_name>         output console log' )
@@ -255,6 +265,11 @@ def main( argv ):
                     ai+= 1
                     options['save']= argv[ai]
                     action_list.append( 'f_save_list' )
+            elif arg == '--difftree':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['diffroot']= argv[ai]
+                    action_list.append( 'f_difftree' )
             elif arg == '--size':
                 action_list.append( 'f_size_command' )
             elif arg == '-l' or arg == '--list':
@@ -293,6 +308,7 @@ def main( argv ):
 
         ftool= FileTools()
         for action in action_list:
+            Log.p( '#[%s] %d files' % (action, len(file_list)) )
             try:
                 func= getattr( ftool, action )
                 file_list= func( file_list, options )
