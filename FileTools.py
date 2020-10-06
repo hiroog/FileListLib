@@ -200,6 +200,7 @@ class FileTools:
             target_path= os.path.join( diffroot, file_name )
             if not os.path.exists( target_path ):
                 diff_list.append( file_name )
+                Log.v( target_path )
         return  diff_list
 
 #------------------------------------------------------------------------------
