@@ -137,22 +137,31 @@ class FileTools:
 
     def f_noutf8( self, file_list, options ):
         u8tools= UTF8Tools()
+        c_cp932= 0
+        c_utf8= 0
         grep_list= []
         for file_name in file_list:
-            if u8tools.isUTF8( file_name ) == UTF8Tools.CP932:
+            code= u8tools.isUTF8( file_name )
+            if code == UTF8Tools.CP932:
                 grep_list.append( file_name )
+                c_cp932+= 1
+            elif code == UTF8Tools.UTF8:
+                c_utf8+= 1
+        Log.p( '# utf8', c_utf8 )
+        Log.p( '# cp932', c_cp932 )
         return  grep_list
 
     def f_cvutf8( self, file_list, options ):
         u8tools= UTF8Tools()
-        grep_list= []
         for file_name in file_list:
             if u8tools.isUTF8( file_name ) == UTF8Tools.CP932:
-                grep_list.append( file_name )
-                output_name= file_name + '.cvt_u8.txt'
-                Log.p( file_name, '-->', output_name )
-                u8tools.convert( file_name, output_name, 'cp932', 'utf-8' )
-        return  grep_list
+                src_temp= file_name + '.cp932.src'
+                if not os.path.exists( src_temp ):
+                    os.rename( file_name, src_temp )
+                output_name= file_name
+                Log.v( src_temp, '-->', output_name )
+                u8tools.convert( src_temp, output_name, 'cp932', 'utf-8' )
+        return  file_list
 
     def f_size_command( self, file_list, options ):
         total= 0
@@ -171,9 +180,17 @@ class FileTools:
         return  file_list
 
     def f_file_list( self, file_list, options ):
-        total= 0
         for file_name in file_list:
             Log.p( file_name )
+        return  file_list
+
+    def f_save_list( self, file_list, options ):
+        save_file= options['save']
+        with open( save_file, 'w' ) as fo:
+            for file_name in file_list:
+                fo.write( '%s\n' % file_name )
+            fo.write( '# %d\n' % len(file_list) )
+        Log.p( 'output=', save_file )
         return  file_list
 
 #------------------------------------------------------------------------------
@@ -187,6 +204,8 @@ def usage():
     print( '  --size' )
     print( '  --grep <pattern>' )
     print( '  --noutf8' )
+    print( '  --cvutf8' )
+    print( '  --save <file_name>' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
     print( '  --clog <file_name>         output console log' )
@@ -231,6 +250,11 @@ def main( argv ):
                     ai+= 1
                     options['pattern']= argv[ai]
                     action_list.append( 'f_grep' )
+            elif arg == '--save':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['save']= argv[ai]
+                    action_list.append( 'f_save_list' )
             elif arg == '--size':
                 action_list.append( 'f_size_command' )
             elif arg == '-l' or arg == '--list':

@@ -92,6 +92,15 @@ workspace\.mel$
 \.jpeg$
 \.exe$
 \.dll$
+\.zip$
+\.gz$
+\.xz$
+\.exr$
+\.lib$
+\.chm$
+\.dylib$
 ^/Engine/Programs/
 ^/Engine/Build/
 /VCRedist/
+console_log\.txt$
+\.cp932\.src$
