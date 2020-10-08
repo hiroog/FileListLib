@@ -203,6 +203,15 @@ class FileTools:
                 Log.v( target_path )
         return  diff_list
 
+    def f_pathmatch( self, file_list, options ):
+        match_pat= re.compile( options['pathmatch'] )
+        diff_list= []
+        for file_name in file_list:
+            pat= match_pat.search( file_name )
+            if pat is not None:
+                diff_list.append( file_name )
+        return  diff_list
+
 #------------------------------------------------------------------------------
 
 def usage():
@@ -217,6 +226,7 @@ def usage():
     print( '  --cvutf8' )
     print( '  --save <file_name>' )
     print( '  --difftree <diff_root>' )
+    print( '  --pathmatch <pattern>' )
     print( '  --force                    force overwrite' )
     print( '  --log                      output to output.log' )
     print( '  --clog <file_name>         output console log' )
@@ -271,6 +281,11 @@ def main( argv ):
                     ai+= 1
                     options['diffroot']= argv[ai]
                     action_list.append( 'f_difftree' )
+            elif arg == '--pathmatch':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['pathmatch']= argv[ai]
+                    action_list.append( 'f_pathmatch' )
             elif arg == '--size':
                 action_list.append( 'f_size_command' )
             elif arg == '-l' or arg == '--list':
