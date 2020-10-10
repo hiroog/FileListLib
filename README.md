@@ -17,18 +17,19 @@ UE4 のように 100GB を超えるプロジェクトはチーム内で配布用
 ## 使用例
 
 ```
-$ python3 FileTools.py --list
+$ python3 -ig FileTools.py --list
 ```
 
 ## 除外指定ファイル付きフォルダコピー
 
 ```
-$ python3 FileTools.py src --copy dest
+$ python3 -ig FileTools.py src --copy dest
 ```
 
 ## 除外指定ファイル
 
-ignorefile は default で `.flignore` になります。`--ignore` オプションで変更可能です。
+ignorefile は default で `.flignore` になります。
+'-ig' の代わりに `--ignore` コマンドを使うと任意の名前を指定できます。
 git と同じようにサブフォルダへの配置も可能です。
 
 ignorefile のフォーマットは Python の正規表現を使います。git/mercurial との互換性はありません。

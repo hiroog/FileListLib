@@ -151,7 +151,7 @@ class PatternStack:
 
 
 class FileListLib:
-    def __init__( self, ignore_file ):
+    def __init__( self, ignore_file= None ):
         self.stack= PatternStack()
         self.ignore_file= ignore_file
 
@@ -163,10 +163,13 @@ class FileListLib:
         #with os.scandir( root ) as di:
         di= os.scandir( root )
         #ignore_pushed= False
-        ignore_file= os.path.join( root, self.ignore_file )
-        if os.path.exists( ignore_file ):
-            self.stack.push( ignore_file )
-            #ignore_pushed= True
+        if self.ignore_file:
+            ignore_file= os.path.join( root, self.ignore_file )
+            if os.path.exists( ignore_file ):
+                self.stack.push( ignore_file )
+                #ignore_pushed= True
+            else:
+                self.stack.push()
         else:
             self.stack.push()
         start_offset= len(root)
@@ -187,6 +190,12 @@ class FileListLib:
         Log.pop()
         Log.d( 'Leave [' + root + '/]' )
         Log.pop()
+        return  file_list
+
+    def find_file_preload( self, root, file_name ):
+        self.stack.push( file_name )
+        file_list= self.find_file( root )
+        self.stack.pop()
         return  file_list
 
 

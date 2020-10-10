@@ -1,4 +1,4 @@
-$ python3 ../FileTools.py -l
+$ python3 ../FileTools.py -ig -l
 
 ----------------------------------------
 ./g.data

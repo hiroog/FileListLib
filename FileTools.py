@@ -186,11 +186,24 @@ class FileTools:
 
     def f_save_list( self, file_list, options ):
         save_file= options['save']
-        with open( save_file, 'w' ) as fo:
+        with open( save_file, 'w', encoding='utf-8' ) as fo:
             for file_name in file_list:
                 fo.write( '%s\n' % file_name )
             fo.write( '# %d\n' % len(file_list) )
-        Log.p( 'output=', save_file )
+        Log.p( 'save: %d %s' % (len(file_list), save_file) )
+        return  file_list
+
+    def f_load_list( self, file_list, options ):
+        load_file= options['load']
+        load_list= []
+        with open( load_file, 'r', encoding='utf-8' ) as fi:
+            for line in fi:
+                name= line.strip()
+                if name == '' or name[0] == '#':
+                    continue
+                load_list.append( name )
+        Log.p( 'load: %d %s' % (len(load_list), load_file) )
+        file_list.extend( load_list )
         return  file_list
 
     def f_difftree( self, file_list, options ):
@@ -212,26 +225,47 @@ class FileTools:
                 diff_list.append( file_name )
         return  diff_list
 
+    def f_ignore( self, file_list, options ):
+        ignore_file= options['ignore']
+        fll= FileListLib.FileListLib( ignore_file )
+        file_list= fll.find_file( options['base'] )
+        return  file_list
+
+    def f_findtree( self, file_list, options ):
+        ignore_file= options['ignore']
+        fll= FileListLib.FileListLib()
+        file_list= fll.find_file_preload( options['base'], ignore_file )
+        return  file_list
+
+    def f_clear( self, file_list, options ):
+        return  []
+
+
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.20 2020/10/04 Hiroyuki Ogasawara' )
-    print( 'usage: FileTools.py [options] <base_dir>' )
-    print( '  -i,--ignore <ignore_file>  (default .flignore)' )
+    print( 'FileTools.py v1.30 2020/10/04 Hiroyuki Ogasawara' )
+    print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
+    print( 'command:' )
+    print( '  -i,--ignore <ignore_file>' )
+    print( '  -ig' )
+    print( '  --findtree <ignore_file>' )
     print( '  --copy <target_folder>' )
     print( '  -l,--list' )
     print( '  --size' )
     print( '  --grep <pattern>' )
-    print( '  --noutf8' )
-    print( '  --cvutf8' )
+    print( '  --load <file_name>' )
     print( '  --save <file_name>' )
     print( '  --difftree <diff_root>' )
     print( '  --pathmatch <pattern>' )
+    print( '  --noutf8' )
+    print( '  --cvutf8' )
+    print( '  --clear' )
+    print( 'option:' )
     print( '  --force                    force overwrite' )
-    print( '  --log                      output to output.log' )
     print( '  --clog <file_name>         output console log' )
     print( '  -v,--verbose' )
-    print( 'ex. FileTools.py src --copy dest' )
+    print( 'ex. FileTools.py -i .flignore src --copy dest' )
     sys.exit( 1 )
 
 
@@ -241,10 +275,9 @@ def main( argv ):
         'force' : False,
         'target': None,
         'verbose': False,
+        'ignore': '.flignore',
     }
     action_list= []
-    ignore_file= '.flignore'
-    logging= False
 
     acount= len(argv)
     ai= 1
@@ -256,11 +289,13 @@ def main( argv ):
             elif arg == '-i' or arg == '--ignore':
                 if ai+1 < acount:
                     ai+= 1
-                    ignore_file= argv[ai]
-            elif arg == '--force':
-                options['force']= True
-            elif arg == '-v' or arg == '--verbose':
-                options['verbose']= True
+                    options['ignore']= argv[ai]
+                    action_list.append( 'f_ignore' )
+            elif arg == '--findtree':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['ignore']= argv[ai]
+                    action_list.append( 'f_findtree' )
             elif arg == '--copy':
                 if ai+1 < acount:
                     ai+= 1
@@ -276,6 +311,11 @@ def main( argv ):
                     ai+= 1
                     options['save']= argv[ai]
                     action_list.append( 'f_save_list' )
+            elif arg == '--load':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['load']= argv[ai]
+                    action_list.append( 'f_load_list' )
             elif arg == '--difftree':
                 if ai+1 < acount:
                     ai+= 1
@@ -286,16 +326,22 @@ def main( argv ):
                     ai+= 1
                     options['pathmatch']= argv[ai]
                     action_list.append( 'f_pathmatch' )
+            elif arg == '-ig':
+                action_list.append( 'f_ignore' )
             elif arg == '--size':
                 action_list.append( 'f_size_command' )
+            elif arg == '--clear':
+                action_list.append( 'f_clear' )
             elif arg == '-l' or arg == '--list':
                 action_list.append( 'f_file_list' )
             elif arg == '--noutf8':
                 action_list.append( 'f_noutf8' )
             elif arg == '--cvutf8':
                 action_list.append( 'f_cvutf8' )
-            elif arg == '--log':
-                logging= True
+            elif arg == '--force':
+                options['force']= True
+            elif arg == '-v' or arg == '--verbose':
+                options['verbose']= True
             elif arg == '--clog':
                 if ai+1 < acount:
                     ai+= 1
@@ -309,29 +355,18 @@ def main( argv ):
     Log.Verbose= options['verbose']
     if action_list != []:
         start= time.perf_counter()
-
-        fll= FileListLib.FileListLib( ignore_file )
-        file_list= fll.find_file( options['base'] )
-
-        Log.v( '#pass: %d files (%.2f sec)' % (len(file_list), time.perf_counter() - start) )
-
-        if logging:
-            with open( 'output.log', 'w', encoding='utf-8' ) as fo:
-                fo.write( '=============\n' )
-                for name in file_list:
-                    fo.write( name + '\n' )
-                fo.write( 'file=%d\n' % len(file_list) )
+        file_list= []
 
         ftool= FileTools()
         for action in action_list:
-            Log.p( '#[%s] %d files' % (action, len(file_list)) )
+            Log.p( '#begin [%s] in %d files' % (action, len(file_list)) )
             try:
                 func= getattr( ftool, action )
                 file_list= func( file_list, options )
             except AttributeError:
                 usage()
                 break
-            Log.p( '#pass: %d files (%s)' % (len(file_list), action) )
+            Log.p( '#end [%s] out %d files' % (action, len(file_list)) )
     else:
         usage()
 
