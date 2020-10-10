@@ -154,6 +154,7 @@ class FileListLib:
     def __init__( self, ignore_file= None ):
         self.stack= PatternStack()
         self.ignore_file= ignore_file
+        self.preload_file= None
 
     def find_file( self, root ):
         Log.push()
@@ -171,7 +172,8 @@ class FileListLib:
             else:
                 self.stack.push()
         else:
-            self.stack.push()
+            self.stack.push( self.preload_file )
+            self.preload_file= None
         start_offset= len(root)
         for entry in di:
             file_name= entry.name
@@ -193,10 +195,9 @@ class FileListLib:
         return  file_list
 
     def find_file_preload( self, root, file_name ):
-        self.stack.push( file_name )
-        file_list= self.find_file( root )
-        self.stack.pop()
-        return  file_list
+        self.preload_file= file_name
+        self.ignore_file= None
+        return  self.find_file( root )
 
 
 def main( argv ):
