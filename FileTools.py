@@ -256,7 +256,7 @@ class FileTools:
     def f_unique( self, file_list, options ):
         sfile= set()
         for file_name in file_list:
-            sfile.add( root )
+            sfile.add( file_name )
         return  list( sfile )
 
     def f_clear( self, file_list, options ):
