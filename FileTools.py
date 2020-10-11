@@ -6,6 +6,8 @@ import  sys
 import  re
 import  time
 import  shutil
+
+sys.path.append( os.path.dirname( sys.argv[0] ) )
 import  FileListLib
 
 class LogOutput:
@@ -35,14 +37,9 @@ Log= LogOutput()
 
 #------------------------------------------------------------------------------
 
-class UTF8Tools:
-    ASCII= 0
-    UTF8= 1
-    CP932= 2
-    ERROR= 3
+class UTF8Tools2:
     def __init__( self ):
-        import  chardet
-        self.chardet= chardet
+        pass
 
     def convert( self, file_name, output_name, en_src, en_dest ):
         with open( file_name, 'r', encoding=en_src ) as fi:
@@ -50,16 +47,20 @@ class UTF8Tools:
                 fo.write( fi.read() )
 
     def isUTF8( self, file_name ):
-        with open( file_name, 'rb' ) as fi:
-            result= self.chardet.detect( fi.read() )
-            encode= result['encoding']
-            if encode == 'utf-8':
-                return  UTF8Tools.UTF8
-            if encode == 'ascii':
-                return  UTF8Tools.ASCII
-            if encode == 'SHIFT_JIS' or encode == 'CP932':
-                return  UTF8Tools.CP932
-        return  UTF8Tools.ERROR
+        try:
+            with open( file_name, 'r', encoding='utf-8', errors='strict' ) as fi:
+                fi.read()
+        except UnicodeError:
+            return  False
+        return  True
+
+    def isSJIS( self, file_name ):
+        try:
+            with open( file_name, 'r', encoding='cp932', errors='strict' ) as fi:
+                fi.read()
+        except UnicodeError:
+            return  False
+        return  True
 
 
 #------------------------------------------------------------------------------
@@ -136,25 +137,29 @@ class FileTools:
         return  grep_list
 
     def f_noutf8( self, file_list, options ):
-        u8tools= UTF8Tools()
+        u8tools= UTF8Tools2()
         c_cp932= 0
         c_utf8= 0
+        c_unknown= 0
         grep_list= []
         for file_name in file_list:
-            code= u8tools.isUTF8( file_name )
-            if code == UTF8Tools.CP932:
-                grep_list.append( file_name )
-                c_cp932+= 1
-            elif code == UTF8Tools.UTF8:
+            if u8tools.isUTF8( file_name ):
                 c_utf8+= 1
+            elif u8tools.isSJIS( file_name ):
+                c_cp932+= 1
+                grep_list.append( file_name )
+            else:
+                c_unknown+= 1
+                grep_list.append( file_name )
         Log.p( '# utf8', c_utf8 )
         Log.p( '# cp932', c_cp932 )
+        Log.p( '# erros', c_unknown )
         return  grep_list
 
     def f_cvutf8( self, file_list, options ):
-        u8tools= UTF8Tools()
+        u8tools= UTF8Tools2()
         for file_name in file_list:
-            if u8tools.isUTF8( file_name ) == UTF8Tools.CP932:
+            if u8tools.isSJIS( file_name ):
                 src_temp= file_name + '.cp932.src'
                 if not os.path.exists( src_temp ):
                     os.rename( file_name, src_temp )
@@ -253,6 +258,12 @@ class FileTools:
             sfile.add( root )
         return  list( sfile )
 
+    def f_unique( self, file_list, options ):
+        sfile= set()
+        for file_name in file_list:
+            sfile.add( file_name )
+        return  list( sfile )
+
     def f_clear( self, file_list, options ):
         return  []
 
@@ -260,7 +271,7 @@ class FileTools:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.30 2020/10/04 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.34 2020/10/11 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
     print( 'command:' )
     print( '  -i,--ignore <ignore_file>' )
@@ -276,6 +287,7 @@ def usage():
     print( '  --pathmatch <pattern>' )
     print( '  --pathstrip <pattern>' )
     print( '  --dir' )
+    print( '  --unique' )
     print( '  --noutf8' )
     print( '  --cvutf8' )
     print( '  --clear' )
@@ -355,6 +367,8 @@ def main( argv ):
                 action_list.append( 'f_size_command' )
             elif arg == '--dir':
                 action_list.append( 'f_dir' )
+            elif arg == '--unique':
+                action_list.append( 'f_unique' )
             elif arg == '--clear':
                 action_list.append( 'f_clear' )
             elif arg == '-l' or arg == '--list':
@@ -387,10 +401,10 @@ def main( argv ):
             Log.p( '#begin [%s] in %d files' % (action, len(file_list)) )
             try:
                 func= getattr( ftool, action )
-                file_list= func( file_list, options )
             except AttributeError:
                 usage()
                 break
+            file_list= func( file_list, options )
             Log.p( '#end [%s] out %d files' % (action, len(file_list)) )
     else:
         usage()
