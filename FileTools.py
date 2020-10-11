@@ -225,6 +225,15 @@ class FileTools:
                 diff_list.append( file_name )
         return  diff_list
 
+    def f_pathstrip( self, file_list, options ):
+        match_pat= re.compile( options['pathstrip'] )
+        diff_list= []
+        for file_name in file_list:
+            pat= match_pat.search( file_name )
+            if pat is not None:
+                diff_list.append( pat.group(1) )
+        return  diff_list
+
     def f_ignore( self, file_list, options ):
         ignore_file= options['ignore']
         fll= FileListLib.FileListLib( ignore_file )
@@ -236,6 +245,13 @@ class FileTools:
         fll= FileListLib.FileListLib()
         file_list= fll.find_file_preload( options['base'], ignore_file )
         return  file_list
+
+    def f_dir( self, file_list, options ):
+        sfile= set()
+        for file_name in file_list:
+            root,name= os.path.split( file_name )
+            sfile.add( root )
+        return  list( sfile )
 
     def f_clear( self, file_list, options ):
         return  []
@@ -258,6 +274,8 @@ def usage():
     print( '  --save <file_name>' )
     print( '  --difftree <diff_root>' )
     print( '  --pathmatch <pattern>' )
+    print( '  --pathstrip <pattern>' )
+    print( '  --dir' )
     print( '  --noutf8' )
     print( '  --cvutf8' )
     print( '  --clear' )
@@ -326,10 +344,17 @@ def main( argv ):
                     ai+= 1
                     options['pathmatch']= argv[ai]
                     action_list.append( 'f_pathmatch' )
+            elif arg == '--pathstrip':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['pathstrip']= argv[ai]
+                    action_list.append( 'f_pathstrip' )
             elif arg == '-ig':
                 action_list.append( 'f_ignore' )
             elif arg == '--size':
                 action_list.append( 'f_size_command' )
+            elif arg == '--dir':
+                action_list.append( 'f_dir' )
             elif arg == '--clear':
                 action_list.append( 'f_clear' )
             elif arg == '-l' or arg == '--list':
