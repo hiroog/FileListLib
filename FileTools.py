@@ -253,6 +253,12 @@ class FileTools:
             sfile.add( root )
         return  list( sfile )
 
+    def f_unique( self, file_list, options ):
+        sfile= set()
+        for file_name in file_list:
+            sfile.add( root )
+        return  list( sfile )
+
     def f_clear( self, file_list, options ):
         return  []
 
@@ -260,7 +266,7 @@ class FileTools:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.30 2020/10/04 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.32 2020/10/11 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
     print( 'command:' )
     print( '  -i,--ignore <ignore_file>' )
@@ -276,6 +282,7 @@ def usage():
     print( '  --pathmatch <pattern>' )
     print( '  --pathstrip <pattern>' )
     print( '  --dir' )
+    print( '  --unique' )
     print( '  --noutf8' )
     print( '  --cvutf8' )
     print( '  --clear' )
@@ -355,6 +362,8 @@ def main( argv ):
                 action_list.append( 'f_size_command' )
             elif arg == '--dir':
                 action_list.append( 'f_dir' )
+            elif arg == '--unique':
+                action_list.append( 'f_unique' )
             elif arg == '--clear':
                 action_list.append( 'f_clear' )
             elif arg == '-l' or arg == '--list':
