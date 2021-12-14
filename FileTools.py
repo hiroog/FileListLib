@@ -273,11 +273,32 @@ class FileTools:
     def f_clear( self, file_list, options ):
         return  []
 
+    def f_reverse( self, file_list, options ):
+        return  list( reversed( file_list ) )
+
+    def f_sort_t( self, file_list, options ):
+        s_list= []
+        for file_name in file_list:
+            stat= os.stat( file_name )
+            s_list.append( (stat.st_mtime,file_name) )
+        s_list= sorted( s_list, key=lambda a: a[0] )
+        file_list= []
+        for mt,file_name in s_list:
+            file_list.append( file_name )
+        return  file_list
+
+    def f_cleanup( self, file_list, options ):
+        count= options['cleanup']
+        for file_name in file_list[count:]:
+            #shutil.rmtree( file_name )
+            os.remove( file_name )
+        return  []
+
 
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.35 2020/10/11 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.36 2020/10/11 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
     print( 'command:' )
     print( '  -i,--ignore <ignore_file>' )
@@ -298,6 +319,9 @@ def usage():
     print( '  --noutf8' )
     print( '  --cvutf8' )
     print( '  --clear' )
+    print( '  --reverse' )
+    print( '  --sort_t' )
+    print( '  --cleanup <file_count>' )
     print( 'option:' )
     print( '  --force                    force overwrite' )
     print( '  --clog <file_name>         output console log' )
@@ -373,6 +397,11 @@ def main( argv ):
                     ai+= 1
                     options['pathstrip']= argv[ai]
                     action_list.append( 'f_pathstrip' )
+            elif arg == '--cleanup':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['cleanup']= int(argv[ai])
+                    action_list.append( 'f_cleanup' )
             elif arg == '-ig':
                 action_list.append( 'f_ignore' )
             elif arg == '--size':
@@ -383,6 +412,10 @@ def main( argv ):
                 action_list.append( 'f_unique' )
             elif arg == '--clear':
                 action_list.append( 'f_clear' )
+            elif arg == '--reverse':
+                action_list.append( 'f_reverse' )
+            elif arg == '--sort_t':
+                action_list.append( 'f_sort_t' )
             elif arg == '-l' or arg == '--list':
                 action_list.append( 'f_file_list' )
             elif arg == '--noutf8':
