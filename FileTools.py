@@ -211,6 +211,12 @@ class FileTools:
         file_list.extend( load_list )
         return  file_list
 
+    def f_sub_load( self, file_list, options ):
+        options2= options.copy()
+        options2['load']= options2['sub_load']
+        ld_file_list= self.f_load_list( [], options2 )
+        return  sorted( list( set( file_list ) - set( ld_file_list ) ) )
+
     def f_difftree( self, file_list, options ):
         diffroot= options['diffroot']
         diff_list= []
@@ -271,7 +277,7 @@ class FileTools:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.34 2020/10/11 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.35 2020/10/11 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
     print( 'command:' )
     print( '  -i,--ignore <ignore_file>' )
@@ -283,6 +289,7 @@ def usage():
     print( '  --grep <pattern>' )
     print( '  --load <file_name>' )
     print( '  --save <file_name>' )
+    print( '  --sub_load <file_name>' )
     print( '  --difftree <diff_root>' )
     print( '  --pathmatch <pattern>' )
     print( '  --pathstrip <pattern>' )
@@ -346,6 +353,11 @@ def main( argv ):
                     ai+= 1
                     options['load']= argv[ai]
                     action_list.append( 'f_load_list' )
+            elif arg == '--sub_load':
+                if ai+1 < acount:
+                    ai+= 1
+                    options['sub_load']= argv[ai]
+                    action_list.append( 'f_sub_load' )
             elif arg == '--difftree':
                 if ai+1 < acount:
                     ai+= 1
