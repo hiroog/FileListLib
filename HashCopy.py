@@ -11,7 +11,8 @@ from multiprocessing import Pool
 
 sys.path.append( os.path.dirname( sys.argv[0] ) )
 import FileListLib
-import ScriptLib
+
+#------------------------------------------------------------------------------
 
 class HashDB:
 
@@ -190,20 +191,20 @@ class ParallelCopy:
             dest_name= os.path.join( dest_root, file_name[src_len:] )
             copy_list.append( (file_name, dest_name) )
 
-        with ScriptLib.ExecTime2( 'copy' ):
-            if parallel == 1:
-                self.hash_copy.copy_tupple_list( copy_list )
-            else:
-                param_list= self.split_list( copy_list, parallel )
-                result_list= []
-                with Pool( parallel ) as pool:
-                    for pi in range(parallel):
-                        job= CopyJob( self.options, pi )
-                        result_list.append( pool.apply_async( job.copy_proc, (param_list[pi],) ) )
 
-                    for ret in result_list:
-                        dcache= ret.get()
-                        self.dcache.merge( dcache )
+        if parallel == 1:
+            self.hash_copy.copy_tupple_list( copy_list )
+        else:
+            param_list= self.split_list( copy_list, parallel )
+            result_list= []
+            with Pool( parallel ) as pool:
+                for pi in range(parallel):
+                    job= CopyJob( self.options, pi )
+                    result_list.append( pool.apply_async( job.copy_proc, (param_list[pi],) ) )
+
+                for ret in result_list:
+                    dcache= ret.get()
+                    self.dcache.merge( dcache )
 
 
 #------------------------------------------------------------------------------

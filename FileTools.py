@@ -101,7 +101,8 @@ class FileTools:
                 if verbose:
                     Log.v( file_name + ' --> ' + dest_file )
                 shutil.copy( file_name, dest_file )
-                os.chmod( dest_file, stat.S_IWRITE )
+                file_stat= os.stat( dest_file )
+                os.chmod( dest_file, file_stat.st_mode | stat.S_IWRITE )
                 file_count+= 1
             copy_index+= 1
             if copy_index / total_count > progress:
@@ -264,6 +265,13 @@ class FileTools:
             sfile.add( file_name )
         return  list( sfile )
 
+    def f_setwritable( self, file_list, options ):
+        sfile= set()
+        for file_name in file_list:
+            file_stat= os.stat( file_name )
+            os.chmod( file_name, file_stat.st_mode | stat.S_IWRITE )
+        return  file_list
+
     def f_clear( self, file_list, options ):
         return  []
 
@@ -271,7 +279,7 @@ class FileTools:
 #------------------------------------------------------------------------------
 
 def usage():
-    print( 'FileTools.py v1.34 2020/10/11 Hiroyuki Ogasawara' )
+    print( 'FileTools.py v1.35 2020/10/11 Hiroyuki Ogasawara' )
     print( 'usage: FileTools.py [<options|commands>] [<base_dir>]' )
     print( 'command:' )
     print( '  -i,--ignore <ignore_file>' )
@@ -290,6 +298,7 @@ def usage():
     print( '  --unique' )
     print( '  --noutf8' )
     print( '  --cvutf8' )
+    print( '  --setwritable' )
     print( '  --clear' )
     print( 'option:' )
     print( '  --force                    force overwrite' )
@@ -297,6 +306,12 @@ def usage():
     print( '  -v,--verbose' )
     print( 'ex. FileTools.py -i .flignore src --copy dest' )
     sys.exit( 1 )
+
+def getArg( ai, argv, options, opt_name ):
+    if ai+1 < len(argv):
+        ai+= 1
+        options[opt_name]= argv[ai]
+    return  ai
 
 
 def main( argv ):
@@ -377,6 +392,8 @@ def main( argv ):
                 action_list.append( 'f_noutf8' )
             elif arg == '--cvutf8':
                 action_list.append( 'f_cvutf8' )
+            elif arg == '--setwritable':
+                action_list.append( 'f_setwritable' )
             elif arg == '--force':
                 options['force']= True
             elif arg == '-v' or arg == '--verbose':
